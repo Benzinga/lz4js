@@ -1,0 +1,26 @@
+{
+  "name": "lz4js",
+  "version": "0.1.0",
+  "description": "An Lz4 implementation for the browser.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Benzinga/lz4js.git"
+  },
+  "keywords": [
+    "lz4",
+    "compression",
+    "decompression",
+    "browser",
+    "commonjs"
+  ],
+  "author": "John Chadwick",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Benzinga/lz4js/issues"
+  },
+  "homepage": "https://github.com/Benzinga/lz4js#readme"
+}
