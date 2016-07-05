@@ -1,4 +1,4 @@
-# Lz4.js
+# Lz4.js [![NPM version](https://badge.fury.io/js/lz4js.svg)](https://www.npmjs.com/package/lz4js)
 Lz4.js is an implementation of Lz4 designed to be used in web browsers. It contains no dependencies on external libraries or Node.JS, though it is organized as a set of CommonJS modules. It is recommended to use Browserify or WebPack to bundle this for the web browser.
 
 ## Usage
