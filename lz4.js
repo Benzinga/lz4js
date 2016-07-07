@@ -129,8 +129,8 @@ exports.compressBound = function compressBound(n) {
     return (n + (n/255) + 16) | 0;
 };
 
-// Calculates an upper bound for lz4 uncompression, by reading the data.
-exports.uncompressBound = function uncompressBound(src) {
+// Calculates an upper bound for lz4 decompression, by reading the data.
+exports.decompressBound = function decompressBound(src) {
     var sIndex = 0;
 
     // Read magic number
@@ -191,8 +191,8 @@ exports.uncompressBound = function uncompressBound(src) {
 // Creates a buffer of a given byte-size, falling back to plain arrays.
 exports.makeBuffer = makeBuffer;
 
-// Uncompresses a block of Lz4.
-exports.uncompressBlock = function uncompressBlock(src, dst, sIndex, sLength, dIndex) {
+// Decompresses a block of Lz4.
+exports.decompressBlock = function decompressBlock(src, dst, sIndex, sLength, dIndex) {
     var mLength, mOffset, sEnd, dIndex;
 
     // Setup initial state.
@@ -363,8 +363,8 @@ exports.compressBlock = function compressBlock(src, dst, sIndex, sLength, hashTa
     return dIndex;
 };
 
-// Uncompresses a frame of Lz4 data.
-exports.uncompressFrame = function uncompressFrame(src, dst) {
+// Decompresses a frame of Lz4 data.
+exports.decompressFrame = function decompressFrame(src, dst) {
     var useBlockSum, useContentSum, useContentSize;
     var descriptor, bs;
     var sIndex = 0, dIndex = 0;
@@ -425,8 +425,8 @@ exports.uncompressFrame = function uncompressFrame(src, dst) {
                 dst[dIndex++] = src[sIndex++];
             }
         } else {
-            // Uncompress into blockBuf
-            dIndex = exports.uncompressBlock(src, dst, sIndex, compSize, dIndex);
+            // Decompress into blockBuf
+            dIndex = exports.decompressBlock(src, dst, sIndex, compSize, dIndex);
             sIndex += compSize;
         }
     }
@@ -501,17 +501,17 @@ exports.compressFrame = function compressFrame(src, dst) {
     return dIndex;
 };
 
-// Uncompresses a buffer containing an Lz4 frame. maxSize is optional; if not
+// Decompresses a buffer containing an Lz4 frame. maxSize is optional; if not
 // provided, a maximum size will be determined by examining the data. The
 // buffer returned will always be perfectly-sized.
-exports.uncompress = function uncompress(src, maxSize) {
+exports.decompress = function decompress(src, maxSize) {
     var dst, size;
 
     if (maxSize === undefined)
-        maxSize = exports.uncompressBound(src);
+        maxSize = exports.decompressBound(src);
 
     dst = exports.makeBuffer(maxSize);
-    size = exports.uncompressFrame(src, dst);
+    size = exports.decompressFrame(src, dst);
 
     if (size !== maxSize)
         dst = sliceArray(dst, 0, size);
