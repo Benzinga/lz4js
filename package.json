@@ -1,6 +1,6 @@
 {
   "name": "lz4js",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "An Lz4 implementation for the browser.",
   "main": "index.js",
   "scripts": {
