@@ -22,5 +22,13 @@
   "bugs": {
     "url": "https://github.com/Benzinga/lz4js/issues"
   },
-  "homepage": "https://github.com/Benzinga/lz4js#readme"
+  "homepage": "https://github.com/Benzinga/lz4js#readme",
+  "devDependencies": {
+    "eslint": "^3.0.1",
+    "eslint-config-semistandard": "^6.0.2",
+    "eslint-config-standard": "^5.3.5",
+    "eslint-plugin-promise": "^2.0.0",
+    "eslint-plugin-react": "^5.2.2",
+    "eslint-plugin-standard": "^2.0.0"
+  }
 }
