@@ -26,12 +26,12 @@ describe('lz4', function () {
   describe('#decompress', function () {
     it('should decompress empty lz4 Array correctly', function () {
       var emptyLz4 = [4, 34, 77, 24, 64, 112, 223, 0, 0, 0, 0];
-      expect(lz4.decompress(emptyLz4)).to.be.deep.equal(byteArray());
+      expect(lz4.decompress(emptyLz4)).to.be.deep.equal(byteArray(0));
     });
 
     it('should decompress empty lz4 Uint8Array correctly', function () {
       var emptyLz4 = byteArray([4, 34, 77, 24, 64, 112, 223, 0, 0, 0, 0]);
-      expect(lz4.decompress(emptyLz4)).to.be.deep.equal(byteArray());
+      expect(lz4.decompress(emptyLz4)).to.be.deep.equal(byteArray(0));
     });
 
     it('should decompress data compressed with lz4c', function () {
@@ -120,7 +120,7 @@ describe('lz4', function () {
 
     it('should compress empty Uint8Array correctly', function () {
       var emptyLz4 = byteArray([4, 34, 77, 24, 64, 112, 223, 0, 0, 0, 0]);
-      expect(lz4.compress(byteArray())).to.be.deep.equal(emptyLz4);
+      expect(lz4.compress(byteArray(0))).to.be.deep.equal(emptyLz4);
     });
 
     it('should output pseudo RLE', function () {
