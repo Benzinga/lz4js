@@ -257,7 +257,7 @@ exports.decompressBlock = function decompressBlock (src, dst, sIndex, sLength, d
 
     // Copy match
     // prefer to use typedarray.copyWithin for larger matches
-    if (hasCopyWithin && mLength > 15) {
+    if (hasCopyWithin && mLength > 31) {
       dst.copyWithin(dIndex, dIndex - mOffset, dIndex - mOffset + mLength);
       dIndex += mLength;
     } else {
