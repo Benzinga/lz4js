@@ -203,6 +203,7 @@ exports.makeBuffer = makeBuffer;
 // Decompresses a block of Lz4.
 exports.decompressBlock = function decompressBlock (src, dst, sIndex, sLength, dIndex) {
   var mLength, mOffset, sEnd, n, i;
+  var hasCopyWithin = dst.copyWithin !== undefined;
 
   // Setup initial state.
   sEnd = sIndex + sLength;
@@ -252,9 +253,15 @@ exports.decompressBlock = function decompressBlock (src, dst, sIndex, sLength, d
 
     mLength += minMatch;
 
-    // Copy match.
-    for (i = dIndex - mOffset, n = i + mLength; i < n;) {
-      dst[dIndex++] = dst[i++] | 0;
+    // Copy match
+    // prefer to use typedarray.copyWithin for larger matches
+    if (hasCopyWithin && mLength > 15) {
+      dst.copyWithin(dIndex, dIndex - mOffset, dIndex - mOffset + mLength);
+      dIndex += mLength;
+    } else {
+      for (i = dIndex - mOffset, n = i + mLength; i < n;) {
+        dst[dIndex++] = dst[i++] | 0;
+      }
     }
   }
 
