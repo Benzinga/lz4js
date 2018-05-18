@@ -96,7 +96,9 @@ function makeBuffer (size) {
 
 function sliceArray (array, start, end) {
   if (typeof array.buffer !== undefined) {
-    if (Uint8Array.prototype.slice) {
+    if (Uint8Array.prototype.subarray) {
+      return array.subarray(start, end);
+    }else if (Uint8Array.prototype.slice) {
       return array.slice(start, end);
     } else {
       // Uint8Array#slice polyfill.
@@ -535,7 +537,6 @@ exports.decompress = function decompress (src, maxSize) {
   if (maxSize === undefined) {
     maxSize = exports.decompressBound(src);
   }
-
   dst = exports.makeBuffer(maxSize);
   size = exports.decompressFrame(src, dst);
 
