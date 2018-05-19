@@ -181,7 +181,7 @@ exports.decompressBound = function decompressBound (src) {
     if (blockSize & bsUncompressed) {
       blockSize &= ~bsUncompressed;
       maxSize += blockSize;
-    } else {
+    } else if (blockSize > 0) {
       maxSize += maxBlockSize;
     }
 
