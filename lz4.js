@@ -203,7 +203,7 @@ exports.makeBuffer = makeBuffer;
 // Decompresses a block of Lz4.
 exports.decompressBlock = function decompressBlock (src, dst, sIndex, sLength, dIndex) {
   var mLength, mOffset, sEnd, n, i;
-  var hasCopyWithin = dst.copyWithin !== undefined;
+  var hasCopyWithin = dst.copyWithin !== undefined && dst.fill !== undefined;
 
   // Setup initial state.
   sEnd = sIndex + sLength;
@@ -255,7 +255,13 @@ exports.decompressBlock = function decompressBlock (src, dst, sIndex, sLength, d
 
     // Copy match
     // prefer to use typedarray.copyWithin for larger matches
-    if (hasCopyWithin && mLength > 31) {
+    // NOTE: copyWithin doesn't work as required by LZ4 for overlapping sequences
+    // e.g. mOffset=1, mLength=30 (repeach char 30 times)
+    // we special case the repeat char w/ array.fill
+    if (hasCopyWithin && mOffset === 1) {
+      dst.fill(dst[dIndex - 1] | 0, dIndex, dIndex + mLength);
+      dIndex += mLength;
+    } else if (hasCopyWithin && mOffset > mLength && mLength > 31) {
       dst.copyWithin(dIndex, dIndex - mOffset, dIndex - mOffset + mLength);
       dIndex += mLength;
     } else {
