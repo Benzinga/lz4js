@@ -75,7 +75,7 @@ function makeHashTable () {
 // Clear hashtable.
 function clearHashTable (table) {
   for (var i = 0; i < hashSize; i++) {
-    hashTable[i] = 0;
+    table[i] = 0;
   }
 }
 
