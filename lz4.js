@@ -16,8 +16,8 @@ var util = require('./util.js');
 
 // Compression format parameters/constants.
 var minMatch = 4;
-var minLength = 13;
-var searchLimit = 5;
+var matchSearchLimit = 12;
+var minTrailingLitterals = 5;
 var skipTrigger = 6;
 var hashSize = 1 << 16;
 
@@ -265,10 +265,10 @@ exports.decompressBlock = function decompressBlock (src, dst, sIndex, sLength, d
       dst.copyWithin(dIndex, dIndex - mOffset, dIndex - mOffset + mLength);
       dIndex += mLength;
     } else {
-      for (i = dIndex - mOffset, n = i + mLength; i < n;) {
-        dst[dIndex++] = dst[i++] | 0;
-      }
+    for (i = dIndex - mOffset, n = i + mLength; i < n;) {
+      dst[dIndex++] = dst[i++] | 0;
     }
+  }
   }
 
   return dIndex;
@@ -284,83 +284,81 @@ exports.compressBlock = function compressBlock (src, dst, sIndex, sLength, hashT
   sEnd = sLength + sIndex;
   mAnchor = sIndex;
 
-  // Process only if block is large enough.
-  if (sLength >= minLength) {
-    var searchMatchCount = (1 << skipTrigger) + 3;
+  var searchMatchCount = (1 << skipTrigger) + 3;
 
-    // Consume until last n literals (Lz4 spec limitation.)
-    while (sIndex + minMatch < sEnd - searchLimit) {
-      var seq = util.readU32(src, sIndex);
-      var hash = util.hashU32(seq) >>> 0;
+  // Search for matches with a limit of matchSearchLimit bytes 
+  // before the end of block (Lz4 spec limitation.)
+  while (sIndex <= sEnd - matchSearchLimit) {
+    var seq = util.readU32(src, sIndex);
+    var hash = util.hashU32(seq) >>> 0;
 
-      // Crush hash to 16 bits.
-      hash = ((hash >> 16) ^ hash) >>> 0 & 0xffff;
+    // Crush hash to 16 bits.
+    hash = ((hash >> 16) ^ hash) >>> 0 & 0xffff;
 
-      // Look for a match in the hashtable. NOTE: remove one; see below.
-      mIndex = hashTable[hash] - 1;
+    // Look for a match in the hashtable. NOTE: remove one; see below.
+    mIndex = hashTable[hash] - 1;
 
-      // Put pos in hash table. NOTE: add one so that zero = invalid.
-      hashTable[hash] = sIndex + 1;
+    // Put pos in hash table. NOTE: add one so that zero = invalid.
+    hashTable[hash] = sIndex + 1;
 
-      // Determine if there is a match (within range.)
-      if (mIndex < 0 || ((sIndex - mIndex) >>> 16) > 0 || util.readU32(src, mIndex) !== seq) {
-        mStep = searchMatchCount++ >> skipTrigger;
-        sIndex += mStep;
-        continue;
-      }
-
-      searchMatchCount = (1 << skipTrigger) + 3;
-
-      // Calculate literal count and offset.
-      literalCount = sIndex - mAnchor;
-      mOffset = sIndex - mIndex;
-
-      // We've already matched one word, so get that out of the way.
-      sIndex += minMatch;
-      mIndex += minMatch;
-
-      // Determine match length.
-      // N.B.: mLength does not include minMatch, Lz4 adds it back
-      // in decoding.
-      mLength = sIndex;
-      while (sIndex < sEnd - searchLimit && src[sIndex] === src[mIndex]) {
-        sIndex++;
-        mIndex++;
-      }
-      mLength = sIndex - mLength;
-
-      // Write token + literal count.
-      var token = mLength < mlMask ? mLength : mlMask;
-      if (literalCount >= runMask) {
-        dst[dIndex++] = (runMask << mlBits) + token;
-        for (n = literalCount - runMask; n >= 0xff; n -= 0xff) {
-          dst[dIndex++] = 0xff;
-        }
-        dst[dIndex++] = n;
-      } else {
-        dst[dIndex++] = (literalCount << mlBits) + token;
-      }
-
-      // Write literals.
-      for (var i = 0; i < literalCount; i++) {
-        dst[dIndex++] = src[mAnchor + i];
-      }
-
-      // Write offset.
-      dst[dIndex++] = mOffset;
-      dst[dIndex++] = (mOffset >> 8);
-
-      // Write match length.
-      if (mLength >= mlMask) {
-        for (n = mLength - mlMask; n >= 0xff; n -= 0xff) {
-          dst[dIndex++] = 0xff;
-        }
-        dst[dIndex++] = n;
-      }
-
-      // Move the anchor.
-      mAnchor = sIndex;
+    // Determine if there is a match (within range.)
+    if (mIndex < 0 || ((sIndex - mIndex) >>> 16) > 0 || util.readU32(src, mIndex) !== seq) {
+      mStep = searchMatchCount++ >> skipTrigger;
+      sIndex += mStep;
+      continue;
     }
+
+    searchMatchCount = (1 << skipTrigger) + 3;
+
+    // Calculate literal count and offset.
+    literalCount = sIndex - mAnchor;
+    mOffset = sIndex - mIndex;
+
+    // We've already matched one word, so get that out of the way.
+    sIndex += minMatch;
+    mIndex += minMatch;
+
+    // Determine match length.
+    // N.B.: mLength does not include minMatch, Lz4 adds it back
+    // in decoding.
+    mLength = sIndex;
+    while (sIndex < sEnd - minTrailingLitterals && src[sIndex] === src[mIndex]) {
+      sIndex++;
+      mIndex++;
+    }
+    mLength = sIndex - mLength;
+
+    // Write token + literal count.
+    var token = mLength < mlMask ? mLength : mlMask;
+    if (literalCount >= runMask) {
+      dst[dIndex++] = (runMask << mlBits) + token;
+      for (n = literalCount - runMask; n >= 0xff; n -= 0xff) {
+        dst[dIndex++] = 0xff;
+      }
+      dst[dIndex++] = n;
+    } else {
+      dst[dIndex++] = (literalCount << mlBits) + token;
+    }
+
+    // Write literals.
+    for (var i = 0; i < literalCount; i++) {
+      dst[dIndex++] = src[mAnchor + i];
+    }
+
+    // Write offset.
+    dst[dIndex++] = mOffset;
+    dst[dIndex++] = (mOffset >> 8);
+
+    // Write match length.
+    if (mLength >= mlMask) {
+      for (n = mLength - mlMask; n >= 0xff; n -= 0xff) {
+        dst[dIndex++] = 0xff;
+      }
+      dst[dIndex++] = n;
+    }
+
+    // Move the anchor.
+    mAnchor = sIndex;
   }
 
   // Nothing was encoded.
